@@ -1,0 +1,361 @@
+<%- include("partials/header") %>
+
+<div class="container report-page">
+  <section class="report-hero report-hero-ledger">
+    <div>
+      <h2>Transaction Ledger</h2>
+      <p>Detailed transaction records with filtering, sorting, and export.</p>
+    </div>
+    <div class="report-generated" id="reportGenerated"></div>
+  </section>
+
+  <section class="report-stats" id="reportStats">
+    <article class="card report-stat">
+      <h3>🧾 Transactions</h3>
+      <p id="statCount">0</p>
+    </article>
+    <article class="card report-stat">
+      <h3>💸 Total Value</h3>
+      <p id="statTotal">₹0.00</p>
+    </article>
+    <article class="card report-stat">
+      <h3>📈 Avg / Transaction</h3>
+      <p id="statAverage">₹0.00</p>
+    </article>
+    <article class="card report-stat">
+      <h3>🚩 High-Value Count</h3>
+      <p id="statHighValue">0</p>
+    </article>
+  </section>
+
+  <section class="report-controls">
+    <div class="control-group">
+      <label for="searchInput">Search</label>
+      <input id="searchInput" type="text" placeholder="Search title..." />
+    </div>
+    <div class="control-group">
+      <label for="categorySelect">Category</label>
+      <select id="categorySelect">
+        <option value="All">All Categories</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label for="sortSelect">Sort</label>
+      <select id="sortSelect">
+        <option value="latest">Latest First</option>
+        <option value="oldest">Oldest First</option>
+        <option value="high">Amount High to Low</option>
+        <option value="low">Amount Low to High</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label for="fromDate">From</label>
+      <input id="fromDate" type="date" />
+    </div>
+    <div class="control-group">
+      <label for="toDate">To</label>
+      <input id="toDate" type="date" />
+    </div>
+    <div class="control-actions">
+      <button id="resetFiltersBtn" class="submit-btn report-action-btn">Reset</button>
+      <button id="exportCsvBtn" class="report-export-btn">Export CSV</button>
+    </div>
+  </section>
+
+  <section class="report-chip-row">
+    <button class="report-chip active" data-category="All">All</button>
+    <div id="categoryChips"></div>
+  </section>
+
+  <section class="report-ledger-summary" id="ledgerSummary">
+    <div class="ledger-metric">
+      <span class="ledger-label">Largest Transaction</span>
+      <strong id="largestTxn">—</strong>
+    </div>
+    <div class="ledger-metric">
+      <span class="ledger-label">Smallest Transaction</span>
+      <strong id="smallestTxn">—</strong>
+    </div>
+    <div class="ledger-metric">
+      <span class="ledger-label">Latest Transaction</span>
+      <strong id="latestTxn">—</strong>
+    </div>
+    <div class="ledger-metric">
+      <span class="ledger-label">Date Coverage</span>
+      <strong id="dateCoverage">—</strong>
+    </div>
+  </section>
+
+  <section class="report-table-wrap">
+    <div class="report-table-header">
+      <h3>Transaction Entries</h3>
+      <span class="expense-count-badge" id="rowCount">0 rows</span>
+    </div>
+    <table class="report-table report-ledger-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>📌 Title</th>
+          <th>🏷️ Category</th>
+          <th>💰 Amount</th>
+          <th>🏁 Flag</th>
+          <th>📅 Date</th>
+          <th>📊 Running Total</th>
+        </tr>
+      </thead>
+      <tbody id="reportBody"></tbody>
+    </table>
+    <div class="empty-state report-empty" id="reportEmpty" style="display:none;">
+      <div class="empty-icon">📭</div>
+      <h4>No transactions found</h4>
+      <p>Try changing search/filter values.</p>
+    </div>
+    <div class="report-pagination">
+      <button id="prevPageBtn" class="report-page-btn">Previous</button>
+      <span id="pageInfo">Page 1 / 1</span>
+      <button id="nextPageBtn" class="report-page-btn">Next</button>
+    </div>
+  </section>
+</div>
+
+<div id="reportRawData" style="display:none;"><%= JSON.stringify(expenses) %></div>
+
+<script>
+  const rawExpenses = JSON.parse(document.getElementById('reportRawData').textContent || '[]')
+    .map((e) => ({ ...e, amount: Number(e.amount) || 0 }));
+
+  const reportGenerated = document.getElementById('reportGenerated');
+  reportGenerated.textContent = `Updated ${new Date().toLocaleDateString('en-IN', {
+    weekday: 'short', day: '2-digit', month: 'short', year: 'numeric'
+  })}`;
+
+  const searchInput = document.getElementById('searchInput');
+  const categorySelect = document.getElementById('categorySelect');
+  const sortSelect = document.getElementById('sortSelect');
+  const fromDate = document.getElementById('fromDate');
+  const toDate = document.getElementById('toDate');
+  const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+  const exportCsvBtn = document.getElementById('exportCsvBtn');
+  const categoryChips = document.getElementById('categoryChips');
+
+  const reportBody = document.getElementById('reportBody');
+  const rowCount = document.getElementById('rowCount');
+  const reportEmpty = document.getElementById('reportEmpty');
+  const pageInfo = document.getElementById('pageInfo');
+  const prevPageBtn = document.getElementById('prevPageBtn');
+  const nextPageBtn = document.getElementById('nextPageBtn');
+
+  const statCount = document.getElementById('statCount');
+  const statTotal = document.getElementById('statTotal');
+  const statAverage = document.getElementById('statAverage');
+  const statHighValue = document.getElementById('statHighValue');
+
+  const largestTxn = document.getElementById('largestTxn');
+  const smallestTxn = document.getElementById('smallestTxn');
+  const latestTxn = document.getElementById('latestTxn');
+  const dateCoverage = document.getElementById('dateCoverage');
+
+  const currency = (v) => `₹${(Number(v) || 0).toFixed(2)}`;
+  const safeDate = (value) => {
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? null : d;
+  };
+  const formatDate = (value) => {
+    const d = safeDate(value);
+    if (!d) return '-';
+    return d.toLocaleDateString('en-GB');
+  };
+  const highValueThreshold = 1000;
+
+  const categories = [...new Set(rawExpenses.map((e) => e.category || 'Other'))].sort();
+  categories.forEach((cat) => {
+    const option = document.createElement('option');
+    option.value = cat;
+    option.textContent = cat;
+    categorySelect.appendChild(option);
+
+    const chip = document.createElement('button');
+    chip.className = 'report-chip';
+    chip.dataset.category = cat;
+    chip.textContent = cat;
+    categoryChips.appendChild(chip);
+  });
+
+  let currentPage = 1;
+  const pageSize = 12;
+
+  function activateCategoryChip(value) {
+    document.querySelectorAll('.report-chip[data-category]').forEach((chip) => {
+      chip.classList.toggle('active', chip.dataset.category === value);
+    });
+  }
+
+  function getFilteredData() {
+    const q = searchInput.value.trim().toLowerCase();
+    const selectedCategory = categorySelect.value;
+    const fromVal = fromDate.value ? new Date(fromDate.value) : null;
+    const toVal = toDate.value ? new Date(toDate.value) : null;
+    if (toVal) toVal.setHours(23, 59, 59, 999);
+
+    const filtered = rawExpenses.filter((e) => {
+      const expenseDate = safeDate(e.date);
+      if (!expenseDate) return false;
+      if (q && !(e.title || '').toLowerCase().includes(q)) return false;
+      if (selectedCategory !== 'All' && (e.category || 'Other') !== selectedCategory) return false;
+      if (fromVal && expenseDate < fromVal) return false;
+      if (toVal && expenseDate > toVal) return false;
+      return true;
+    });
+
+    return filtered.sort((a, b) => {
+      if (sortSelect.value === 'high') return b.amount - a.amount;
+      if (sortSelect.value === 'low') return a.amount - b.amount;
+      if (sortSelect.value === 'oldest') return safeDate(a.date) - safeDate(b.date);
+      return safeDate(b.date) - safeDate(a.date);
+    });
+  }
+
+  function renderStats(data) {
+    const total = data.reduce((sum, e) => sum + e.amount, 0);
+    const count = data.length;
+    const avg = count ? total / count : 0;
+    const highCount = data.filter((e) => e.amount >= highValueThreshold).length;
+
+    statCount.textContent = count;
+    statTotal.textContent = currency(total);
+    statAverage.textContent = currency(avg);
+    statHighValue.textContent = highCount;
+
+    if (!count) {
+      largestTxn.textContent = '—';
+      smallestTxn.textContent = '—';
+      latestTxn.textContent = '—';
+      dateCoverage.textContent = '—';
+      return;
+    }
+
+    const largest = [...data].sort((a, b) => b.amount - a.amount)[0];
+    const smallest = [...data].sort((a, b) => a.amount - b.amount)[0];
+    const latest = [...data].sort((a, b) => safeDate(b.date) - safeDate(a.date))[0];
+    const oldest = [...data].sort((a, b) => safeDate(a.date) - safeDate(b.date))[0];
+
+    largestTxn.textContent = `${currency(largest.amount)} (${largest.title || 'Untitled'})`;
+    smallestTxn.textContent = `${currency(smallest.amount)} (${smallest.title || 'Untitled'})`;
+    latestTxn.textContent = `${formatDate(latest.date)} (${latest.title || 'Untitled'})`;
+    dateCoverage.textContent = `${formatDate(oldest.date)} to ${formatDate(latest.date)}`;
+  }
+
+  function renderTable(data) {
+    const escapeHtml = (value) => String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+
+    const totalPages = Math.max(1, Math.ceil(data.length / pageSize));
+    currentPage = Math.min(currentPage, totalPages);
+    const start = (currentPage - 1) * pageSize;
+    const paged = data.slice(start, start + pageSize);
+
+    let runningTotal = data.slice(0, start).reduce((sum, e) => sum + e.amount, 0);
+
+    reportBody.innerHTML = paged.map((e, index) => {
+      runningTotal += e.amount;
+      const isHigh = e.amount >= highValueThreshold;
+      const rowNumber = start + index + 1;
+      return `
+        <tr>
+          <td>${rowNumber}</td>
+          <td>${escapeHtml(e.title || 'Untitled')}</td>
+          <td><span class="report-category-chip">${escapeHtml(e.category || 'Other')}</span></td>
+          <td><strong>${currency(e.amount)}</strong></td>
+          <td><span class="ledger-flag ${isHigh ? 'flag-high' : 'flag-normal'}">${isHigh ? 'High' : 'Normal'}</span></td>
+          <td>${escapeHtml(formatDate(e.date))}</td>
+          <td><strong>${currency(runningTotal)}</strong></td>
+        </tr>
+      `;
+    }).join('');
+
+    rowCount.textContent = `${data.length} rows`;
+    pageInfo.textContent = `Page ${currentPage} / ${totalPages}`;
+    reportEmpty.style.display = data.length ? 'none' : 'block';
+    prevPageBtn.disabled = currentPage <= 1;
+    nextPageBtn.disabled = currentPage >= totalPages;
+  }
+
+  function exportCsv(data) {
+    const headers = ['S.No', 'Title', 'Category', 'Amount', 'Flag', 'Date'];
+    const rows = data.map((e, i) => [
+      i + 1,
+      `"${String(e.title || '').replace(/"/g, '""')}"`,
+      `"${String(e.category || 'Other').replace(/"/g, '""')}"`,
+      e.amount.toFixed(2),
+      e.amount >= highValueThreshold ? 'High' : 'Normal',
+      formatDate(e.date)
+    ].join(','));
+
+    const csv = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'transaction-ledger.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function renderAll(resetPage = false) {
+    if (resetPage) currentPage = 1;
+    const data = getFilteredData();
+    renderStats(data);
+    renderTable(data);
+  }
+
+  [searchInput, categorySelect, sortSelect, fromDate, toDate].forEach((el) => {
+    el.addEventListener('input', () => renderAll(true));
+    el.addEventListener('change', () => renderAll(true));
+  });
+
+  document.querySelectorAll('.report-chip[data-category]').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      const cat = chip.dataset.category;
+      categorySelect.value = cat;
+      activateCategoryChip(cat);
+      renderAll(true);
+    });
+  });
+
+  resetFiltersBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    categorySelect.value = 'All';
+    sortSelect.value = 'latest';
+    fromDate.value = '';
+    toDate.value = '';
+    activateCategoryChip('All');
+    renderAll(true);
+  });
+
+  exportCsvBtn.addEventListener('click', () => exportCsv(getFilteredData()));
+
+  prevPageBtn.addEventListener('click', () => {
+    if (currentPage > 1) {
+      currentPage -= 1;
+      renderAll();
+    }
+  });
+
+  nextPageBtn.addEventListener('click', () => {
+    const totalPages = Math.max(1, Math.ceil(getFilteredData().length / pageSize));
+    if (currentPage < totalPages) {
+      currentPage += 1;
+      renderAll();
+    }
+  });
+
+  renderAll(true);
+</script>
+
+<%- include("partials/footer") %>

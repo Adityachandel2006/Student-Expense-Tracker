@@ -1,0 +1,96 @@
+[
+  {
+    "id": 1772717964350,
+    "title": "burger",
+    "amount": "45",
+    "category": "Food",
+    "date": "2026-03-05"
+  },
+  {
+    "id": 1772718428203,
+    "title": "pizza",
+    "amount": "400",
+    "category": "Food",
+    "date": "2026-03-05"
+  },
+  {
+    "id": 1772719432444,
+    "userId": 1772719403373,
+    "title": "BURGER",
+    "amount": "100",
+    "category": "Food",
+    "date": "2026-03-05"
+  },
+  {
+    "id": 1772724296770,
+    "userId": 1772719443187,
+    "title": "car",
+    "amount": "100",
+    "category": "Transport",
+    "date": "2026-03-05"
+  },
+  {
+    "id": 1772724315950,
+    "userId": 1772719443187,
+    "title": "burger",
+    "amount": "100",
+    "category": "Food",
+    "date": "2026-03-05"
+  },
+  {
+    "id": 1772724679670,
+    "userId": 1772719403373,
+    "title": "lunch",
+    "amount": "100",
+    "category": "Shopping",
+    "date": "2026-03-05"
+  },
+  {
+    "id": 1772724708872,
+    "userId": 1772719403373,
+    "title": "burger",
+    "amount": "100",
+    "category": "Food",
+    "date": "2026-03-12"
+  },
+  {
+    "id": 1772724730135,
+    "userId": 1772719403373,
+    "title": "burger",
+    "amount": "100",
+    "category": "Food",
+    "date": "2026-05-05"
+  },
+  {
+    "id": 1772724756738,
+    "userId": 1772719403373,
+    "title": "food",
+    "amount": "100",
+    "category": "Food",
+    "date": "2026-08-05"
+  },
+  {
+    "id": 1773061860884,
+    "userId": 1773060604615,
+    "title": "burger",
+    "amount": "100",
+    "category": "Food",
+    "date": "2026-03-09"
+  },
+  {
+    "id": 1773061882113,
+    "userId": 1773060604615,
+    "title": "pizza",
+    "amount": "300",
+    "category": "Food",
+    "date": "2026-01-07"
+  },
+  {
+    "id": 1773061923708,
+    "userId": 1773060604615,
+    "title": "car",
+    "amount": "100",
+    "category": "Transport",
+    "date": "2026-03-09"
+  }
+]

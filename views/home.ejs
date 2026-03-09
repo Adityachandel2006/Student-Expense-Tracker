@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Expense Tracker - Track Your Spending Smart</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="/images/logo.svg">
+</head>
+<body>
+
+
+<nav class="landing-navbar">
+  <div class="nav-container">
+    <div class="nav-logo">
+      <img src="/images/logo.svg" alt="Logo" class="logo" style="height:48px; vertical-align:middle; margin-right:10px;">
+      <h1 style="display:inline; vertical-align:middle;">ExpenseTracker</h1>
+    </div>
+    <div class="nav-links">
+      <a href="#features" class="nav-link">Features</a>
+      <a href="#benefits" class="nav-link">Benefits</a>
+      <a href="#testimonials" class="nav-link">Reviews</a>
+      <a href="/dashboard" class="nav-link nav-link-tracker">Expense Tracker</a>
+      <a href="/login" class="nav-link-login">Login</a>
+      <a href="/register" class="nav-link-register">Get Started</a>
+    </div>
+    <div class="hamburger">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  </div>
+</nav>
+
+
+<section class="hero">
+  <div class="hero-content">
+    <div class="hero-text">
+      <h2 class="hero-title">
+        Master Your Money
+        <span class="gradient-text">In Minutes</span>
+      </h2>
+      <p class="hero-subtitle">Track every rupee, control your spending, and achieve your financial goals. Smart expense tracking for smart students.</p>
+      <div class="hero-buttons">
+        <a href="/register" class="btn-primary">
+          <i class="fas fa-rocket"></i> Start Free Today
+        </a>
+        <a href="/dashboard" class="btn-secondary">
+          <i class="fas fa-wallet"></i> Open Expense Tracker
+        </a>
+        <a href="#features" class="btn-secondary">
+          <i class="fas fa-play-circle"></i> See Features
+        </a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat">
+          <h3>5000+</h3>
+          <p>Active Students</p>
+        </div>
+        <div class="stat">
+          <h3>₹50L+</h3>
+          <p>Tracked Monthly</p>
+        </div>
+        <div class="stat">
+          <h3>4.9⭐</h3>
+          <p>User Rating</p>
+        </div>
+      </div>
+    </div>
+    <div class="hero-image">
+      <div class="floating-card">
+        <div class="card-header">💳 Recent Expense</div>
+        <p>Lunch at Cafe</p>
+        <h3>₹ 250</h3>
+      </div>
+      <div class="floating-chart">
+        <canvas id="heroChart"></canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section id="features" class="features">
+  <div class="section-header">
+    <h2>Powerful Features</h2>
+    <p>Everything you need to manage your money effortlessly</p>
+  </div>
+  <div class="features-grid">
+    
+    <div class="feature-card">
+      <div class="feature-icon">📊</div>
+      <h3>Smart Analytics</h3>
+      <p>Visualize your spending patterns with beautiful charts and detailed breakdowns by category.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">🏷️</div>
+      <h3>Smart Categories</h3>
+      <p>Organize expenses by Food, Transport, Books, Shopping and more. Perfect for student life.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">📝</div>
+      <h3>Detailed Reports</h3>
+      <p>Generate comprehensive monthly reports to understand your spending habits in detail.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">🎯</div>
+      <h3>Budget Tracking</h3>
+      <p>Set spending limits and get instant alerts when you're about to exceed your budget.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">⚡</div>
+      <h3>Quick Add</h3>
+      <p>Add expenses in seconds with our intuitive form. Date, amount, category - that's it!</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">🔒</div>
+      <h3>Secure & Private</h3>
+      <p>Your financial data is encrypted and secure. Only you can access your information.</p>
+    </div>
+
+  </div>
+</section>
+
+
+<section id="benefits" class="benefits">
+  <div class="section-header">
+    <h2>Why Choose ExpenseTracker?</h2>
+    <p>Join thousands of students managing their finances smarter</p>
+  </div>
+  
+  <div class="benefits-tabs">
+    <div class="tabs-header">
+      <button class="tab-button active" onclick="openTab(event, 'benefit-1')">
+        <i class="fas fa-eye"></i>
+        <span>Never Lose Track</span>
+      </button>
+      <button class="tab-button" onclick="openTab(event, 'benefit-2')">
+        <i class="fas fa-chart-line"></i>
+        <span>Save More</span>
+      </button>
+      <button class="tab-button" onclick="openTab(event, 'benefit-3')">
+        <i class="fas fa-bullseye"></i>
+        <span>Achieve Goals</span>
+      </button>
+      <button class="tab-button" onclick="openTab(event, 'benefit-4')">
+        <i class="fas fa-brain"></i>
+        <span>Smart Decisions</span>
+      </button>
+    </div>
+
+    <div class="tabs-content">
+      
+      <div id="benefit-1" class="tab-content active">
+        <div class="benefit-content">
+          <div class="benefit-text">
+            <h3>Never Lose Track Again</h3>
+            <p>Stop wondering where your money went. Get a complete picture of all your expenses in one place with real-time tracking. Every rupee is accounted for.</p>
+            <ul class="benefit-features">
+              <li><i class="fas fa-check-circle"></i> Real-time expense logging</li>
+              <li><i class="fas fa-check-circle"></i> Automatic categorization</li>
+              <li><i class="fas fa-check-circle"></i> 100% data accuracy</li>
+            </ul>
+          </div>
+          <div class="benefit-visual">
+            <div class="icon-large">📊</div>
+          </div>
+        </div>
+      </div>
+
+      
+      <div id="benefit-2" class="tab-content">
+        <div class="benefit-content">
+          <div class="benefit-text">
+            <h3>Spend Less, Save More</h3>
+            <p>Identify spending patterns and unnecessary expenses. Our insights help you save money automatically by recognizing where you overspend.</p>
+            <ul class="benefit-features">
+              <li><i class="fas fa-check-circle"></i> Spending insights & trends</li>
+              <li><i class="fas fa-check-circle"></i> Budget recommendations</li>
+              <li><i class="fas fa-check-circle"></i> Smart alerts & notifications</li>
+            </ul>
+          </div>
+          <div class="benefit-visual">
+            <div class="icon-large">💰</div>
+          </div>
+        </div>
+      </div>
+
+      
+      <div id="benefit-3" class="tab-content">
+        <div class="benefit-content">
+          <div class="benefit-text">
+            <h3>Achieve Your Goals</h3>
+            <p>Whether it's saving for a trip, new gadget, or emergency fund - set budgets and watch your progress track in real-time.</p>
+            <ul class="benefit-features">
+              <li><i class="fas fa-check-circle"></i> Custom budget goals</li>
+              <li><i class="fas fa-check-circle"></i> Progress tracking</li>
+              <li><i class="fas fa-check-circle"></i> Visual progress bars</li>
+            </ul>
+          </div>
+          <div class="benefit-visual">
+            <div class="icon-large">🎯</div>
+          </div>
+        </div>
+      </div>
+
+      
+      <div id="benefit-4" class="tab-content">
+        <div class="benefit-content">
+          <div class="benefit-text">
+            <h3>Make Smarter Decisions</h3>
+            <p>Detailed analytics and reports empower you to make informed financial decisions. Know your top spending categories instantly.</p>
+            <ul class="benefit-features">
+              <li><i class="fas fa-check-circle"></i> Detailed analytics dashboard</li>
+              <li><i class="fas fa-check-circle"></i> Monthly & yearly reports</li>
+              <li><i class="fas fa-check-circle"></i> Category breakdown charts</li>
+            </ul>
+          </div>
+          <div class="benefit-visual">
+            <div class="icon-large">🧠</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="how-it-works">
+  <div class="section-header">
+    <h2>Getting Started is Easy</h2>
+    <p>3 Simple Steps to Better Money Management</p>
+  </div>
+  
+  <div class="steps-container">
+    <div class="step">
+      <div class="step-number">1</div>
+      <h3>Create Account</h3>
+      <p>Sign up in seconds with your username and password. Free forever, no credit card needed.</p>
+      <i class="fas fa-user-plus"></i>
+    </div>
+
+    <div class="step">
+      <div class="step-number">2</div>
+      <h3>Add Expenses</h3>
+      <p>Log your daily expenses by category. Our quick-add form takes just seconds per entry.</p>
+      <i class="fas fa-plus-circle"></i>
+    </div>
+
+    <div class="step">
+      <div class="step-number">3</div>
+      <h3>Analyze & Optimize</h3>
+      <p>View detailed analytics, charts, and reports. Adjust your spending and achieve your goals.</p>
+      <i class="fas fa-chart-bar"></i>
+    </div>
+  </div>
+</section>
+
+
+<section id="testimonials" class="testimonials">
+  <div class="section-header">
+    <h2>What Students Say</h2>
+    <p>Real feedback from real users</p>
+  </div>
+  
+  <div class="testimonials-grid">
+    <div class="testimonial-card">
+      <div class="stars">⭐⭐⭐⭐⭐</div>
+      <p class="testimonial-text">"Finally understand where my pocket money goes! This app saved me ₹2000 per month. Highly recommended!"</p>
+      <div class="testimonial-author">
+        <div class="avatar">👨‍🎓</div>
+        <div>
+          <h4>Rahul Kumar</h4>
+          <p>Engineering Student</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="testimonial-card">
+      <div class="stars">⭐⭐⭐⭐⭐</div>
+      <p class="testimonial-text">"The charts and reports are so helpful! I can now see exactly which categories drain my budget the most."</p>
+      <div class="testimonial-author">
+        <div class="avatar">👩‍🎓</div>
+        <div>
+          <h4>Priya Sharma</h4>
+          <p>Medical Student</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="testimonial-card">
+      <div class="stars">⭐⭐⭐⭐⭐</div>
+      <p class="testimonial-text">"Super easy to use and the budget tracking feature helps me stick to my monthly limits. Love it!"</p>
+      <div class="testimonial-author">
+        <div class="avatar">👨‍💼</div>
+        <div>
+          <h4>Arjun Patel</h4>
+          <p>Commerce Student</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="testimonial-card">
+      <div class="stars">⭐⭐⭐⭐⭐</div>
+      <p class="testimonial-text">"Saved me hundreds! I never realized I was spending so much on food. This app is a game changer."</p>
+      <div class="testimonial-author">
+        <div class="avatar">👩‍🏫</div>
+        <div>
+          <h4>Neha Gupta</h4>
+          <p>IT Student</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="pricing">
+  <div class="section-header">
+    <h2>Simple Pricing</h2>
+    <p>One plan, unlimited expenses, forever free</p>
+  </div>
+  
+  <div class="pricing-card">
+    <h3>Forever Free</h3>
+    <div class="price">
+      <span class="currency">₹</span>
+      <span class="amount">0</span>
+      <span class="period">/month</span>
+    </div>
+    <ul class="features-list">
+      <li><i class="fas fa-check"></i> Unlimited expenses</li>
+      <li><i class="fas fa-check"></i> All categories</li>
+      <li><i class="fas fa-check"></i> Monthly reports</li>
+      <li><i class="fas fa-check"></i> Analytics & charts</li>
+      <li><i class="fas fa-check"></i> Budget tracking</li>
+      <li><i class="fas fa-check"></i> 24/7 support</li>
+    </ul>
+    <a href="/register" class="btn-primary">Start for Free</a>
+  </div>
+</section>
+
+
+<section class="final-cta">
+  <h2>Ready to Take Control of Your Money?</h2>
+  <p>Join thousands of students who've already transformed their financial habits</p>
+  <a href="/register" class="btn-primary btn-large">
+    <i class="fas fa-star"></i> Create Free Account Now
+  </a>
+</section>
+
+
+<footer class="landing-footer">
+  <div class="footer-content">
+    <div class="footer-section">
+      <h4>ExpenseTracker</h4>
+      <p>Smart expense tracking for students</p>
+    </div>
+    <div class="footer-section">
+      <h4>Quick Links</h4>
+      <a href="#features">Features</a>
+      <a href="#benefits">Benefits</a>
+      <a href="#testimonials">Reviews</a>
+    </div>
+    <div class="footer-section">
+      <h4>Account</h4>
+      <a href="/login">Login</a>
+      <a href="/register">Sign Up</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>&copy; 2026 Student Expense Tracker. All rights reserved.</p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const ctx = document.getElementById('heroChart');
+  if (ctx) {
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Food', 'Transport', 'Books', 'Shopping'],
+        datasets: [{
+          data: [30, 25, 20, 25],
+          backgroundColor: ['#667eea', '#764ba2', '#f093fb', '#f5576c'],
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'bottom'
+          }
+        }
+      }
+    });
+  }
+
+  const hamburger = document.querySelector('.hamburger');
+  const navLinks = document.querySelector('.nav-links');
+  
+  if (hamburger) {
+    hamburger.addEventListener('click', () => {
+      navLinks.classList.toggle('active');
+    });
+  }
+
+  function openTab(evt, tabName) {
+    evt.preventDefault();
+    
+    const tabContents = document.querySelectorAll('.tab-content');
+    tabContents.forEach(tab => tab.classList.remove('active'));
+    
+    const tabButtons = document.querySelectorAll('.tab-button');
+    tabButtons.forEach(btn => btn.classList.remove('active'));
+    
+    document.getElementById(tabName).classList.add('active');
+    
+    evt.target.closest('.tab-button').classList.add('active');
+  }
+</script>
+
+</body>
+</html>
