@@ -1,0 +1,389 @@
+<%- include('partials/header') %>
+
+<style>
+  .profile-container {
+    max-width: 700px;
+    margin: 40px auto;
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    position: relative;
+    border: 1px solid var(--border);
+  }
+  
+  .profile-cover {
+    height: 100px;
+    background: var(--surface);
+    border-bottom: 2px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .profile-header-content {
+    text-align: center;
+    margin-top: -60px;
+    padding: 0 30px;
+    position: relative;
+    z-index: 10;
+  }
+
+  .profile-avatar-wrapper {
+    position: relative;
+    display: inline-block;
+  }
+
+  .profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid var(--surface);
+    box-shadow: var(--shadow);
+    background: var(--surface);
+  }
+  
+  .profile-avatar-edit {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    background: var(--primary);
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    transition: all 0.2s ease;
+    border: 2px solid var(--surface);
+  }
+
+  .profile-avatar-edit:hover {
+    background: var(--primary-dark);
+  }
+
+  .profile-title {
+    margin-top: 16px;
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--text);
+  }
+
+  .profile-subtitle {
+    font-size: 14px;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-top: 4px;
+  }
+
+  .profile-body {
+    padding: 30px 40px 40px;
+  }
+
+  .profile-section-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  @media (max-width: 600px) {
+    .form-row {
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+    .profile-body {
+      padding: 20px 20px 30px;
+    }
+  }
+
+  .input-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 8px;
+  }
+
+  .input-field {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-family: inherit;
+    background: #f8fafc;
+    color: var(--text);
+    transition: all 0.25s ease;
+  }
+
+  .input-field:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: var(--surface);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+  }
+
+  .file-input-wrapper {
+    position: relative;
+    background: #f8fafc;
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    text-align: center;
+    transition: all 0.25s ease;
+    cursor: pointer;
+  }
+
+  .file-input-wrapper:hover {
+    border-color: var(--primary);
+    background: rgba(102,126,234,0.02);
+  }
+
+  .file-input-wrapper input[type="file"] {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .file-input-text {
+    font-size: 14px;
+    color: var(--text-muted);
+    font-weight: 600;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .file-input-text i {
+    font-size: 24px;
+    color: var(--primary);
+  }
+
+  .save-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 16px 32px;
+    border-radius: var(--radius-sm);
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    letter-spacing: 0.5px;
+    width: 100%;
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .save-btn:hover {
+    background: var(--primary-dark);
+  }
+  
+  .alert-msg {
+    padding: 14px 20px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 24px;
+    font-weight: 700;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: fadeIn 0.3s ease;
+  }
+  
+  .alert-success {
+    background: rgba(34, 197, 94, 0.1);
+    color: var(--success);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+  }
+  
+  .alert-danger {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .password-requirements {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 6px;
+    font-weight: 500;
+  }
+</style>
+
+<div class="container">
+  <div class="profile-container">
+    <div class="profile-cover"></div>
+    
+    <div class="profile-header-content">
+      <div class="profile-avatar-wrapper">
+        <img src="<%= user.profilePic %>" alt="Profile" class="profile-avatar" id="avatarPreview">
+      </div>
+      <h2 class="profile-title"><%= user.username %></h2>
+      <p class="profile-subtitle">Manage your personal information and security</p>
+    </div>
+
+    <div class="profile-body">
+      <% if (locals.successMsg) { %>
+        <div class="alert-msg alert-success">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+          <%= successMsg %>
+        </div>
+      <% } %>
+
+      <% if (locals.errorMsg) { %>
+        <div class="alert-msg alert-danger">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          <%= errorMsg %>
+        </div>
+      <% } %>
+
+      <form id="profileForm" action="/profile/update" method="POST" enctype="multipart/form-data" class="profile-form">
+        
+        <div class="profile-section-title">
+          <svg width="20" height="20" fill="none" stroke="var(--primary)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+          Personal Details
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label class="input-label">Username</label>
+            <input type="text" name="username" class="input-field" value="<%= user.username %>" required>
+          </div>
+          <div>
+            <label class="input-label">Email Address</label>
+            <input type="email" name="email" class="input-field" value="<%= user.email || '' %>" placeholder="Add your email">
+          </div>
+        </div>
+
+        <div>
+          <label class="input-label">Profile Picture</label>
+          <div class="file-input-wrapper">
+            <input type="file" name="profilePic" accept="image/*" id="profilePicInput">
+            <div class="file-input-text">
+              <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+              <span>Click or drag image to upload new picture</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-section-title" style="margin-top: 20px;">
+          <svg width="20" height="20" fill="none" stroke="var(--primary)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+          Security
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label class="input-label">New Password</label>
+            <input type="password" id="password" name="password" class="input-field" placeholder="Leave blank to keep current">
+            <div class="password-requirements">Minimum 6 characters</div>
+          </div>
+          <div>
+            <label class="input-label">Confirm Password</label>
+            <input type="password" id="confirmPassword" name="confirmPassword" class="input-field" placeholder="Retype new password">
+          </div>
+        </div>
+        
+        <div id="passwordError" class="alert-msg alert-danger" style="display: none; margin-bottom: 0;"></div>
+
+        <button type="submit" class="save-btn">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+          Save Changes
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  const profileForm = document.getElementById('profileForm');
+  const passwordInput = document.getElementById('password');
+  const confirmPasswordInput = document.getElementById('confirmPassword');
+  const passwordError = document.getElementById('passwordError');
+  const profilePicInput = document.getElementById('profilePicInput');
+  const avatarPreview = document.getElementById('avatarPreview');
+
+  // Image preview logic
+  profilePicInput.addEventListener('change', function(e) {
+    if (this.files && this.files[0]) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        avatarPreview.src = e.target.result;
+      }
+      reader.readAsDataURL(this.files[0]);
+    }
+  });
+
+  function validatePasswords() {
+    const password = passwordInput.value;
+    const confirmPassword = confirmPasswordInput.value;
+    
+    // If empty, user doesn't want to change password, which is fine
+    if (password.length === 0) {
+      passwordError.style.display = "none";
+      return true;
+    }
+    
+    if (password.length > 0 && password.length < 6) {
+      passwordError.innerHTML = '<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right:8px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Password must be at least 6 characters long.';
+      passwordError.style.display = "flex";
+      return false;
+    }
+    
+    if (password !== confirmPassword) {
+      passwordError.innerHTML = '<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right:8px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Passwords do not match.';
+      passwordError.style.display = "flex";
+      return false;
+    }
+
+    passwordError.style.display = "none";
+    return true;
+  }
+
+  passwordInput.addEventListener('input', validatePasswords);
+  confirmPasswordInput.addEventListener('input', validatePasswords);
+
+  profileForm.addEventListener('submit', (e) => {
+    if (!validatePasswords()) {
+      e.preventDefault();
+      // Scroll to error
+      passwordError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  });
+</script>
+
+<%- include('partials/footer') %>

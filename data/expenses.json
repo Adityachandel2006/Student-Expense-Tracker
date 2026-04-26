@@ -92,5 +92,53 @@
     "amount": "100",
     "category": "Transport",
     "date": "2026-03-09"
+  },
+  {
+    "id": 1773124244854,
+    "userId": 1772719443187,
+    "title": "dinner",
+    "amount": "500",
+    "category": "Food",
+    "date": "2026-03-10"
+  },
+  {
+    "id": 1773145518380,
+    "userId": 1772719443187,
+    "title": "burger",
+    "amount": "100",
+    "category": "Food",
+    "date": "2026-03-10"
+  },
+  {
+    "id": 1773227009790,
+    "userId": 1773226954549,
+    "title": "burger",
+    "amount": "50",
+    "category": "Food",
+    "date": "2026-03-11"
+  },
+  {
+    "id": 1773227032364,
+    "userId": 1773226954549,
+    "title": "patty",
+    "amount": "25",
+    "category": "Food",
+    "date": "2026-03-11"
+  },
+  {
+    "id": 1773227054627,
+    "userId": 1773226954549,
+    "title": "burger",
+    "amount": "50",
+    "category": "Food",
+    "date": "2026-03-11"
+  },
+  {
+    "id": 1773227082060,
+    "userId": 1773226954549,
+    "title": "car travel",
+    "amount": "500",
+    "category": "Transport",
+    "date": "2026-03-11"
   }
 ]

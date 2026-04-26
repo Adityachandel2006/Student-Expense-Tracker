@@ -45,5 +45,35 @@
     "username": "abhey0814.becse24@chitkara.edu.in",
     "password": "$2b$10$fZVj/oKCbQJFnaDU5Fz4ZOCLQdwh06nYmG2qBYMDVCQjZni9zLvcW",
     "budget": 10000
+  },
+  {
+    "id": 1773124084277,
+    "username": "aditya0820.becse24@chitkara.edu.in",
+    "password": "$2b$10$AyUAqBptbAtvCs34QScxVOC0Sb0eCjLYw/kp3RU4Jlrx.El6NGiFi",
+    "budget": null
+  },
+  {
+    "id": 1773226954549,
+    "username": "Adi@1",
+    "password": "$2b$10$pvrCUUsbqCXThzXSh.Q5yeEN31/fZwUD3lx72UL3r8FwaHnwSmuEy",
+    "budget": 100
+  },
+  {
+    "id": 1776776015837,
+    "username": "Abc",
+    "password": "$2b$10$LTX/LLLladUZzKKrZc96xO1TkKi6LLxTR8KqQKpFFsYamRO.6BpRW",
+    "budget": null
+  },
+  {
+    "id": 1776776052043,
+    "username": "abc",
+    "password": "$2b$10$57JLJWQG7jDsg7Oq.mBFC.KfmFfLbnObIBjnqvfJ2L12eRgjq2T.C",
+    "budget": null
+  },
+  {
+    "id": 1776776425012,
+    "username": "a",
+    "password": "$2b$10$N/Z2cMIU8O1aVXs6VGu9Y.EuyPPZlNw.YDia2S4XHXXhcEaGKcKeG",
+    "budget": null
   }
 ]

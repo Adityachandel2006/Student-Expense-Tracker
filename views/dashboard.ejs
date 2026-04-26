@@ -21,21 +21,21 @@
       
       <div class="stats-row">
         <div class="mini-stat">
-          <div class="mini-stat-icon" style="background: linear-gradient(135deg,#667eea,#764ba2);">💸</div>
+          <div class="mini-stat-icon" style="background: var(--primary); color: white;">💸</div>
           <div>
             <div class="mini-stat-label">Total Spent</div>
             <div class="mini-stat-value">₹<%= total.toFixed(2) %></div>
           </div>
         </div>
         <div class="mini-stat">
-          <div class="mini-stat-icon" style="background: linear-gradient(135deg,#f093fb,#f5576c);">📅</div>
+          <div class="mini-stat-icon" style="background: var(--accent); color: white;">📅</div>
           <div>
             <div class="mini-stat-label">This Month</div>
             <div class="mini-stat-value">₹<%= monthTotal.toFixed(2) %></div>
           </div>
         </div>
         <div class="mini-stat">
-          <div class="mini-stat-icon" style="background: linear-gradient(135deg,#43e97b,#38f9d7);">🎯</div>
+          <div class="mini-stat-icon" style="background: var(--warning); color: white;">🎯</div>
           <div>
             <div class="mini-stat-label">Budget</div>
             <div class="mini-stat-value">
@@ -138,11 +138,13 @@
       
       <div class="add-expense-card">
         <div class="add-expense-header">
-          <h3>➕ Add New Expense</h3>
+          <h3 id="formTitle">➕ Add New Expense</h3>
           <button class="toggle-form-btn" id="toggleFormBtn" onclick="toggleForm()">Hide Form ▲</button>
         </div>
         <div id="expenseFormWrapper">
           <form id="expenseForm" onsubmit="addExpense(event)">
+            <input type="hidden" id="editExpenseId" name="editExpenseId" value="">
+            <input type="hidden" id="editExpenseId" name="editExpenseId" value="">
             <div class="form-grid">
               <div class="input-group">
                 <label>Expense Title</label>
@@ -225,7 +227,15 @@
                     <span class="expense-category cat-<%= exp.category.toLowerCase() %>"><%= exp.category %></span>
                   </div>
                   <div class="expense-amount">₹<%= parseFloat(exp.amount).toFixed(2) %></div>
-                  <div class="expense-actions">
+                                    <div class="expense-actions" style="display: flex; gap: 8px;">
+                    <button type="button" class="edit-btn" title="Edit expense" 
+                      data-id="<%= exp.id %>"
+                      data-title="<%= exp.title.replace(/"/g, '&quot;') %>"
+                      data-amount="<%= exp.amount %>"
+                      data-category="<%= exp.category %>"
+                      data-date="<%= exp.date ? new Date(exp.date).toISOString().split('T')[0] : '' %>"
+                      onclick="openEditMode(this)"
+                      style="background: none; border: none; font-size: 1.2rem; cursor: pointer; transition: transform 0.2s;">✏️</button>
                     <form action="/delete/<%= exp.id %>" method="POST" onsubmit="return confirmDelete(event)">
                       <button type="submit" class="delete" title="Delete expense">🗑️</button>
                     </form>
@@ -340,13 +350,13 @@
 
   function styleRemaining(el, value) {
     if (value < 0) {
-      el.style.background = 'linear-gradient(135deg, #fff5f5, #fee2e2)';
+      el.style.background = '#fee2e2';
       el.style.borderColor = '#fca5a5';
     } else if (value < budgetVal * 0.2) {
-      el.style.background = 'linear-gradient(135deg, #fffbeb, #fef3c7)';
+      el.style.background = '#fef3c7';
       el.style.borderColor = '#fcd34d';
     } else {
-      el.style.background = 'linear-gradient(135deg, #f0fdf4, #dcfce7)';
+      el.style.background = '#dcfce7';
       el.style.borderColor = '#86efac';
     }
   }
@@ -355,10 +365,10 @@
     styleRemaining(remainingCard, remaining);
     styleRemaining(remainingMini, remaining);
   } else if (remainingCard && remainingMini) {
-    remainingCard.style.background = 'linear-gradient(135deg, #f8fafc, #eef2ff)';
-    remainingCard.style.borderColor = '#c7d2fe';
-    remainingMini.style.background = 'linear-gradient(135deg, #f8fafc, #eef2ff)';
-    remainingMini.style.borderColor = '#c7d2fe';
+    remainingCard.style.background = '#f8fafc';
+    remainingCard.style.borderColor = '#dee2e6';
+    remainingMini.style.background = '#f8fafc';
+    remainingMini.style.borderColor = '#dee2e6';
   }
 
   const remainingAmountEl = document.getElementById('remainingAmount');
@@ -385,13 +395,17 @@
   const fill = document.getElementById('progressFill');
   if (!fill) {
   } else if (!hasBudget) {
-    fill.style.background = 'linear-gradient(90deg,#d1d5db,#9ca3af)';
+    fill.style.width = '0%';
+    fill.style.background = 'rgba(255,255,255,0.2)';
   } else if (pct >= 100) {
-    fill.style.background = 'linear-gradient(90deg,#f56565,#e53e3e)';
+    fill.style.width = '100%';
+    fill.style.background = '#ef4444';
   } else if (pct >= 80) {
-    fill.style.background = 'linear-gradient(90deg,#f6ad55,#ed8936)';
+    fill.style.width = Math.min(pct, 100) + '%';
+    fill.style.background = '#f59e0b';
   } else {
-    fill.style.background = 'linear-gradient(90deg,#667eea,#764ba2)';
+    fill.style.width = Math.max(pct, 4) + '%';
+    fill.style.background = 'linear-gradient(90deg, #667eea, #764ba2)';
   }
 
   function filterCategory(category, btn) {
@@ -411,6 +425,35 @@
     });
   }
 
+  
+    let currentEditId = null;
+
+  function openEditMode(btn) {
+    const id = btn.dataset.id;
+    const title = btn.dataset.title;
+    const amount = btn.dataset.amount;
+    const category = btn.dataset.category;
+    const date = btn.dataset.date;
+
+    currentEditId = id;
+    document.getElementById('editExpenseId').value = id;
+    
+    document.querySelector('input[name="title"]').value = title;
+    document.querySelector('input[name="amount"]').value = amount;
+    document.querySelector('select[name="category"]').value = category;
+    document.querySelector('input[name="date"]').value = date;
+
+    document.getElementById('formTitle').textContent = '✏️ Edit Expense';
+    document.getElementById('submitBtnText').textContent = 'Update Expense';
+    
+    const wrapper = document.getElementById('expenseFormWrapper');
+    if (window.getComputedStyle(wrapper).display === 'none') {
+      toggleForm();
+    }
+    
+    document.querySelector('.add-expense-card').scrollIntoView({ behavior: 'smooth' });
+  }
+
   function toggleForm() {
     const wrapper = document.getElementById('expenseFormWrapper');
     const btn = document.getElementById('toggleFormBtn');
@@ -428,7 +471,7 @@
     event.preventDefault();
     const btn = document.getElementById('submitBtn');
     const btnText = document.getElementById('submitBtnText');
-    btnText.textContent = 'Adding...';
+    btnText.textContent = currentEditId ? 'Updating...' : 'Adding...';
     btn.disabled = true;
     btn.style.opacity = '0.7';
 
@@ -436,7 +479,8 @@
     const data = Object.fromEntries(formData);
 
     try {
-      const response = await fetch('/add-expense', {
+      const url = currentEditId ? `/edit-expense/${currentEditId}` : '/add-expense';
+      const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams(data)
@@ -444,14 +488,14 @@
       if (response.ok) {
         window.location.reload();
       } else {
-        alert('Error adding expense. Please try again.');
-        btnText.textContent = '+ Add Expense';
+        alert(currentEditId ? 'Error updating expense. Please try again.' : 'Error adding expense. Please try again.');
+        btnText.textContent = currentEditId ? 'Update Expense' : '+ Add Expense';
         btn.disabled = false;
         btn.style.opacity = '1';
       }
     } catch (err) {
       alert('Network error. Please try again.');
-      btnText.textContent = '+ Add Expense';
+      btnText.textContent = currentEditId ? 'Update Expense' : '+ Add Expense';
       btn.disabled = false;
       btn.style.opacity = '1';
     }
@@ -515,7 +559,7 @@
         labels: Object.keys(categoryTotals),
         datasets: [{
           data: Object.values(categoryTotals),
-          backgroundColor: ['#667eea','#f093fb','#43e97b','#f59e0b','#f56565'],
+          backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'],
           borderColor: '#fff',
           borderWidth: 3,
           hoverBorderWidth: 0,
@@ -559,8 +603,8 @@
         datasets: [{
           label: 'Spending (₹)',
           data: Object.values(monthlyTotals),
-          backgroundColor: 'rgba(102,126,234,0.15)',
-          borderColor: '#667eea',
+          backgroundColor: 'rgba(59, 130, 246, 0.4)',
+          borderColor: '#3b82f6',
           borderWidth: 2,
           borderRadius: 8,
           borderSkipped: false
@@ -584,5 +628,4 @@
     monthlyCanvas.parentElement.innerHTML += '<p class="no-data-msg">No data yet</p>';
   }
 </script>
-
 <%- include("partials/footer") %>

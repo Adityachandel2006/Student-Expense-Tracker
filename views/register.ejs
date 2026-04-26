@@ -6,26 +6,77 @@
   <title>Register - Student Expense Tracker</title>
   <link rel="stylesheet" href="/css/style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .file-upload-wrapper {
+      margin-bottom: 15px;
+      text-align: left;
+    }
+    .file-upload-wrapper label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .file-upload-wrapper input[type="file"] {
+      padding: 10px;
+      background: #f7f9fd;
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-sm);
+      width: 100%;
+      cursor: pointer;
+    }
+    .file-upload-wrapper input[type="file"]:hover {
+      border-color: var(--primary);
+    }
+    .submit-btn-auth {
+      background: var(--gradient);
+      color: white;
+      border: none;
+      padding: 14px;
+      border-radius: var(--radius-sm);
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 10px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .submit-btn-auth:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(102,126,234,0.35);
+    }
+  </style>
 </head>
 <body>
 
 <div class="auth-container">
-
   
   <div class="auth-image">
     <img src="/images/img1.jpg" alt="Expense Tracker">
   </div>
 
-  
   <div class="auth-form-side">
     <div class="auth-form-box">
       <h2>🚀 Create Account</h2>
       <p class="auth-subtitle">Start your journey to better expense management</p>
 
-      <form action="/register" method="POST">
+      <form id="registerForm" action="/register" method="POST" enctype="multipart/form-data">
+        
         <input type="text" name="username" placeholder="👤 Create Username" required>
-        <input type="password" name="password" placeholder="🔐 Create Password" required>
-        <button type="submit">Register Now</button>
+        <input type="email" name="email" placeholder="📧 Email Address" required>
+        <input type="password" id="password" name="password" placeholder="🔐 Create Password" required>
+        <input type="password" id="confirmPassword" name="confirmPassword" placeholder="🔐 Retype Password" required>
+        <p id="passwordError" style="color: var(--danger); font-size: 13px; margin-top: -10px; margin-bottom: 10px; display: none; font-weight: 600;"></p>
+        
+        <div class="file-upload-wrapper">
+          <label for="profilePic">📸 Profile Picture (Optional)</label>
+          <input type="file" id="profilePic" name="profilePic" accept="image/*">
+        </div>
+
+        <button type="submit" class="submit-btn-auth">Register Now</button>
       </form>
 
       <div class="auth-footer-text">
@@ -36,6 +87,42 @@
   </div>
 
 </div>
+
+<script>
+  const registerForm = document.getElementById('registerForm');
+  const passwordInput = document.getElementById('password');
+  const confirmPasswordInput = document.getElementById('confirmPassword');
+  const passwordError = document.getElementById('passwordError');
+
+  function validatePasswords() {
+    const password = passwordInput.value;
+    const confirmPassword = confirmPasswordInput.value;
+    
+    if (password.length > 0 && password.length < 6) {
+      passwordError.textContent = "Password must be at least 6 characters long.";
+      passwordError.style.display = "block";
+      return false;
+    }
+    
+    if (confirmPassword.length > 0 && password !== confirmPassword) {
+      passwordError.textContent = "Passwords do not match.";
+      passwordError.style.display = "block";
+      return false;
+    }
+
+    passwordError.style.display = "none";
+    return true;
+  }
+
+  passwordInput.addEventListener('input', validatePasswords);
+  confirmPasswordInput.addEventListener('input', validatePasswords);
+
+  registerForm.addEventListener('submit', (e) => {
+    if (!validatePasswords()) {
+      e.preventDefault();
+    }
+  });
+</script>
 
 </body>
 </html>

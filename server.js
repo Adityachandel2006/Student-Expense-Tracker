@@ -1,84 +1,92 @@
+require('dotenv').config();
 const express = require("express");
-const fs = require("fs");
-const session = require("express-session");
+const mongoose = require("mongoose");
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const multer = require("multer");
 const path = require("path");
+const { OAuth2Client } = require('google-auth-library');
+
+const User = require('./schemas/User');
+const Expense = require('./schemas/Expense');
 
 const app = express();
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+/* ---------------- DATABASE CONNECTION ---------------- */
+
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
 /* ---------------- MIDDLEWARE ---------------- */
 
 app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 app.use(express.static("public"));
+app.use('/images/default-avatar.png', (req, res) => res.redirect('/images/default-avatar.svg'));
+app.use(cookieParser());
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
-app.use(
-  session({
-    secret: "expense-secret",
-    resave: false,
-    saveUninitialized: true,
-  })
-);
+/* ---------------- MULTER UPLOAD CONFIG ---------------- */
 
-/* ---------------- FILE PATHS ---------------- */
-
-const USERS_FILE = "./data/users.json";
-const EXP_FILE = "./data/expenses.json";
-
-/* ---------------- FILE FUNCTIONS ---------------- */
-
-function readFile(file) {
-  try {
-    const data = fs.readFileSync(file);
-    return JSON.parse(data);
-  } catch {
-    return [];
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'public/uploads/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
   }
-}
+});
 
-function saveFile(file, data) {
-  fs.writeFileSync(file, JSON.stringify(data, null, 2));
-}
-
-function updateUser(userId, updates) {
-  const users = readFile(USERS_FILE);
-  const normalizedUserId = Number(userId);
-  const userIndex = users.findIndex((u) => Number(u.id) === normalizedUserId);
-
-  if (userIndex === -1) {
-    return null;
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Invalid file type. Only JPEG, PNG, and WebP are allowed.'), false);
   }
+};
 
-  users[userIndex] = {
-    ...users[userIndex],
-    ...updates,
-  };
-
-  saveFile(USERS_FILE, users);
-  return users[userIndex];
-}
+const upload = multer({ 
+  storage: storage,
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB limit
+  fileFilter: fileFilter
+});
 
 /* ---------------- AUTH MIDDLEWARE ---------------- */
 
-function auth(req, res, next) {
-  if (!req.session.user) {
+const auth = async (req, res, next) => {
+  const token = req.cookies.jwt;
+  
+  if (!token) {
     return res.redirect("/login");
   }
-  next();
-}
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+    
+    if (!user) {
+      res.clearCookie('jwt');
+      return res.redirect("/login");
+    }
+    
+    req.user = user;
+    next();
+  } catch (err) {
+    res.clearCookie('jwt');
+    return res.redirect("/login");
+  }
+};
 
 /* ---------------- ROUTES ---------------- */
 
 app.get("/", (req, res) => {
   res.render("home");
-});
-
-/* ---------- LOGIN ---------- */
-
-app.get("/login", (req, res) => {
-  res.render("login");
 });
 
 /* ---------- REGISTER ---------- */
@@ -87,106 +95,276 @@ app.get("/register", (req, res) => {
   res.render("register");
 });
 
-app.post("/register", async (req, res) => {
-  const users = readFile(USERS_FILE);
-
-  const hashed = await bcrypt.hash(req.body.password, 10);
-
-  users.push({
-    id: Date.now(),
-    username: req.body.username,
-    password: hashed,
-    budget: null,
+app.post("/register", (req, res, next) => {
+  upload.single('profilePic')(req, res, function (err) {
+    if (err instanceof multer.MulterError) {
+      return res.status(400).send("File upload error: " + err.message);
+    } else if (err) {
+      return res.status(400).send(err.message);
+    }
+    next();
   });
+}, async (req, res) => {
+  try {
+    const { username, email, password, confirmPassword } = req.body;
+    
+    if (password !== confirmPassword) {
+      return res.status(400).send("Passwords do not match");
+    }
+    
+    if (password.length < 6) {
+      return res.status(400).send("Password must be at least 6 characters long");
+    }
+    // Check if user already exists
+    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
+    if (existingUser) {
+      return res.status(400).send("User or email already exists");
+    }
 
-  saveFile(USERS_FILE, users);
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    let profilePicPath = '/images/default-avatar.svg'; // Make sure you add a default avatar or it'll just be a broken image link. You can change this logic.
+    if (req.file) {
+      profilePicPath = '/uploads/' + req.file.filename;
+    }
 
-  res.redirect("/login");
+    const newUser = new User({
+      username,
+      email,
+      password: hashedPassword,
+      profilePic: profilePicPath
+    });
+
+    await newUser.save();
+    res.redirect("/login");
+  } catch (err) {
+    console.error("Registration error:", err);
+    res.status(500).send("Error registering user");
+  }
 });
 
 /* ---------- LOGIN ---------- */
 
+app.get("/login", (req, res) => {
+  res.render("login", { googleClientId: process.env.GOOGLE_CLIENT_ID });
+});
+
 app.post("/login", async (req, res) => {
-  const users = readFile(USERS_FILE);
+  try {
+    const { username, password } = req.body;
 
-  const user = users.find((u) => u.username === req.body.username);
+    const user = await User.findOne({ username });
 
-  if (!user) {
-    return res.json({ success: false, error: "User not found" });
+    if (!user || !user.password) {
+      return res.json({ success: false, error: "User not found or invalid login method" });
+    }
+
+    const match = await bcrypt.compare(password, user.password);
+
+    if (!match) {
+      return res.json({ success: false, error: "Wrong password" });
+    }
+
+    // Generate JWT
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    
+    // Set cookie
+    res.cookie('jwt', token, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 }); // 1 day
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Login error:", err);
+    res.status(500).json({ success: false, error: "Server error" });
   }
+});
 
-  const match = await bcrypt.compare(req.body.password, user.password);
+/* ---------- GOOGLE LOGIN ---------- */
 
-  if (!match) {
-    return res.json({ success: false, error: "Wrong password" });
+app.post("/auth/google", async (req, res) => {
+  try {
+    const { token } = req.body;
+    
+    // Verify Google Token
+    const ticket = await googleClient.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    const googleId = payload['sub'];
+    const email = payload['email'];
+    const username = payload['name'] || email;
+    const profilePic = payload['picture'];
+
+    // Find or Create User
+    let user = await User.findOne({ googleId });
+    
+    if (!user) {
+      if (email) {
+        user = await User.findOne({ email });
+      }
+
+      if (user) {
+        // Link existing manual account with Google
+        user.googleId = googleId;
+        await user.save();
+      } else {
+        // Create new user
+        user = new User({
+          username: username,
+          email: email,
+          googleId: googleId,
+          profilePic: profilePic
+        });
+        await user.save();
+      }
+    }
+
+    // Generate JWT
+    const jwtToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    
+    // Set cookie
+    res.cookie('jwt', jwtToken, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 }); // 1 day
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Google Auth error:", error);
+    res.status(401).json({ success: false, error: "Invalid Google token" });
   }
+});
 
-  req.session.user = user;
 
-  res.json({ success: true });
+/* ---------- PROFILE ---------- */
+
+app.get("/profile", auth, (req, res) => {
+  res.render("profile", {
+    user: req.user,
+    successMsg: req.query.success,
+    errorMsg: req.query.error
+  });
+});
+
+app.post("/profile/update", auth, (req, res, next) => {
+  upload.single('profilePic')(req, res, function (err) {
+    if (err instanceof multer.MulterError) {
+      return res.redirect("/profile?error=File+upload+error:+" + encodeURIComponent(err.message));
+    } else if (err) {
+      return res.redirect("/profile?error=" + encodeURIComponent(err.message));
+    }
+    next();
+  });
+}, async (req, res) => {
+  try {
+    const { username, email, password, confirmPassword } = req.body;
+    
+    // Check if new username or email is already taken by someone else
+    const existingUser = await User.findOne({
+      _id: { $ne: req.user._id },
+      $or: [{ username }, { email: email ? email : null }]
+    });
+    
+    if (existingUser) {
+      return res.redirect("/profile?error=Username+or+Email+already+exists");
+    }
+
+    req.user.username = username;
+    req.user.email = email || req.user.email; // Only update if provided
+
+    // Handle password update if provided
+    if (password) {
+      if (password !== confirmPassword) {
+        return res.redirect("/profile?error=Passwords+do+not+match");
+      }
+      if (password.length < 6) {
+        return res.redirect("/profile?error=Password+must+be+at+least+6+characters");
+      }
+      req.user.password = await bcrypt.hash(password, 10);
+    }
+
+    // Handle profile picture update
+    if (req.file) {
+      req.user.profilePic = '/uploads/' + req.file.filename;
+    }
+
+    await req.user.save();
+    res.redirect("/profile?success=Profile+updated+successfully");
+
+  } catch (err) {
+    console.error("Profile update error:", err);
+    res.redirect("/profile?error=Server+error+updating+profile");
+  }
 });
 
 /* ---------- LOGOUT ---------- */
 
 app.get("/logout", (req, res) => {
-  req.session.destroy();
+  res.clearCookie('jwt');
   res.redirect("/login");
 });
 
 /* ---------- DASHBOARD ---------- */
 
-app.get("/dashboard", auth, (req, res) => {
-  const expenses = readFile(EXP_FILE);
-  const userExpenses = expenses.filter((exp) => exp.userId === req.session.user.id);
+app.get("/dashboard", auth, async (req, res) => {
+  try {
+    const userExpenses = await Expense.find({ userId: req.user._id });
 
-  let total = 0;
-  let monthTotal = 0;
+    let total = 0;
+    let monthTotal = 0;
 
-  const currentMonth = new Date().getMonth();
+    const currentMonth = new Date().getMonth();
 
-  userExpenses.forEach((exp) => {
-    total += Number(exp.amount);
+    userExpenses.forEach((exp) => {
+      total += Number(exp.amount);
 
-    const expDate = new Date(exp.date);
+      const expDate = new Date(exp.date);
 
-    if (expDate.getMonth() === currentMonth) {
-      monthTotal += Number(exp.amount);
-    }
-  });
+      if (expDate.getMonth() === currentMonth) {
+        monthTotal += Number(exp.amount);
+      }
+    });
 
-  const parsedBudget = Number(req.session.user.budget);
-  const budget = Number.isFinite(parsedBudget) && parsedBudget > 0 ? parsedBudget : null;
+    const parsedBudget = Number(req.user.budget);
+    const budget = Number.isFinite(parsedBudget) && parsedBudget > 0 ? parsedBudget : null;
 
-  res.render("dashboard", {
-    expenses: userExpenses,
-    total: total,
-    monthTotal: monthTotal,
-    budget: budget,
-  });
+    res.render("dashboard", {
+      expenses: userExpenses,
+      total: total,
+      monthTotal: monthTotal,
+      budget: budget,
+      user: req.user
+    });
+  } catch (err) {
+    console.error("Dashboard error:", err);
+    res.status(500).send("Error loading dashboard");
+  }
 });
 
 /* ---------- SET/RESET BUDGET ---------- */
 
-function handleSetBudget(req, res) {
-  const budget = Number(req.body.budget);
+async function handleSetBudget(req, res) {
+  try {
+    const budget = Number(req.body.budget);
 
-  if (!Number.isFinite(budget) || budget <= 0) {
-    return res.redirect("/dashboard");
-  }
+    if (Number.isFinite(budget) && budget > 0) {
+      req.user.budget = budget;
+      await req.user.save();
+    }
 
-  const updatedUser = updateUser(req.session.user.id, { budget });
-  if (updatedUser) {
-    req.session.user = updatedUser;
+    res.redirect("/dashboard");
+  } catch (err) {
+    console.error("Set budget error:", err);
+    res.redirect("/dashboard");
   }
-  req.session.save(() => res.redirect("/dashboard"));
 }
 
-function handleResetBudget(req, res) {
-  const updatedUser = updateUser(req.session.user.id, { budget: null });
-  if (updatedUser) {
-    req.session.user = updatedUser;
+async function handleResetBudget(req, res) {
+  try {
+    req.user.budget = null;
+    await req.user.save();
+    res.redirect("/dashboard");
+  } catch (err) {
+    console.error("Reset budget error:", err);
+    res.redirect("/dashboard");
   }
-  req.session.save(() => res.redirect("/dashboard"));
 }
 
 app.post("/set-budget", auth, handleSetBudget);
@@ -196,70 +374,91 @@ app.post("/dashboard/reset-budget", auth, handleResetBudget);
 
 /* ---------- ADD EXPENSE ---------- */
 
-app.post("/add-expense", auth, (req, res) => {
-  const expenses = readFile(EXP_FILE);
+app.post("/add-expense", auth, async (req, res) => {
+  try {
+    const newExpense = new Expense({
+      userId: req.user._id,
+      title: req.body.title,
+      amount: req.body.amount,
+      category: req.body.category,
+      date: req.body.date,
+    });
 
-  const newExpense = {
-    id: Date.now(),
-    userId: req.session.user.id,
-    title: req.body.title,
-    amount: req.body.amount,
-    category: req.body.category,
-    date: req.body.date,
-  };
+    await newExpense.save();
+    res.redirect("/dashboard");
+  } catch (err) {
+    console.error("Add expense error:", err);
+    res.redirect("/dashboard");
+  }
+});
 
-  expenses.push(newExpense);
+/* ---------- EDIT EXPENSE ---------- */
 
-  saveFile(EXP_FILE, expenses);
-
-  res.redirect("/dashboard");
+app.post("/edit-expense/:id", auth, async (req, res) => {
+  try {
+    const { title, amount, category, date } = req.body;
+    await Expense.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user._id },
+      { title, amount, category, date }
+    );
+    res.redirect("/dashboard");
+  } catch (err) {
+    console.error("Edit expense error:", err);
+    res.redirect("/dashboard");
+  }
 });
 
 /* ---------- DELETE EXPENSE ---------- */
 
-app.post("/delete/:id", auth, (req, res) => {
-  let expenses = readFile(EXP_FILE);
-
-  expenses = expenses.filter((exp) => exp.id != req.params.id);
-
-  saveFile(EXP_FILE, expenses);
-
-  res.redirect("/dashboard");
+app.post("/delete/:id", auth, async (req, res) => {
+  try {
+    await Expense.findOneAndDelete({ _id: req.params.id, userId: req.user._id });
+    res.redirect("/dashboard");
+  } catch (err) {
+    console.error("Delete expense error:", err);
+    res.redirect("/dashboard");
+  }
 });
 
 /* ---------- REPORT ---------- */
 
-app.get("/report", auth, (req, res) => {
-  const expenses = readFile(EXP_FILE);
-  const userExpenses = expenses.filter((exp) => exp.userId === req.session.user.id);
+app.get("/report", auth, async (req, res) => {
+  try {
+    const userExpenses = await Expense.find({ userId: req.user._id });
 
-  let total = 0;
-  let categoryTotals = {};
+    let total = 0;
+    let categoryTotals = {};
 
-  userExpenses.forEach((e) => {
-    total += Number(e.amount);
-    categoryTotals[e.category] = (categoryTotals[e.category] || 0) + Number(e.amount);
-  });
+    userExpenses.forEach((e) => {
+      total += Number(e.amount);
+      categoryTotals[e.category] = (categoryTotals[e.category] || 0) + Number(e.amount);
+    });
 
-  let topCategory = "None";
-  let maxAmount = 0;
+    let topCategory = "None";
+    let maxAmount = 0;
 
-  for (let category in categoryTotals) {
-    if (categoryTotals[category] > maxAmount) {
-      maxAmount = categoryTotals[category];
-      topCategory = category;
+    for (let category in categoryTotals) {
+      if (categoryTotals[category] > maxAmount) {
+        maxAmount = categoryTotals[category];
+        topCategory = category;
+      }
     }
-  }
 
-  res.render("report", {
-    expenses: userExpenses,
-    total: total,
-    topCategory: topCategory,
-  });
+    res.render("report", {
+      expenses: userExpenses,
+      total: total,
+      topCategory: topCategory,
+      user: req.user
+    });
+  } catch (err) {
+    console.error("Report error:", err);
+    res.status(500).send("Error loading report");
+  }
 });
 
 /* ---------- SERVER ---------- */
 
-app.listen(3000, () => {
-  console.log("Server running on http://localhost:3000");
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
 });

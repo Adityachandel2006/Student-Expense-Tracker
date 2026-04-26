@@ -19,9 +19,12 @@
 <h2 style="display:inline; vertical-align:middle; font-size:32px; font-weight:800; color:white; letter-spacing:1px;">Expense Tracker</h2>
 </a>
 
-<nav>
-
+<nav style="display: flex; align-items: center; gap: 10px;">
+<% if (locals.user && locals.user.profilePic) { %>
+  <img src="<%= user.profilePic %>" alt="Profile" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.5);">
+<% } %>
 <a href="/dashboard">Dashboard</a>
+<a href="/profile">Profile</a>
 <a href="/report">Report</a>
 <a href="/logout">Logout</a>
 
