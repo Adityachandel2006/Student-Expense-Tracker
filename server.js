@@ -269,7 +269,7 @@ app.post("/profile/update", auth, (req, res, next) => {
     req.user.username = username;
     req.user.email = email || req.user.email; // Only update if provided
 
-    // Handle password update if provided
+    // Handle password update if provided 
     if (password) {
       if (password !== confirmPassword) {
         return res.redirect("/profile?error=Passwords+do+not+match");
