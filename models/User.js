@@ -9,11 +9,10 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     unique: true,
-    sparse: true // Allows multiple users without an email (if they registered before this feature)
+    sparse: true
   },
   password: {
     type: String,
-    // Password is not required if the user logs in with Google
     required: function() {
       return !this.googleId;
     }
@@ -23,13 +22,13 @@ const userSchema = new mongoose.Schema({
     default: null
   },
   profilePic: {
-    type: String, // Store the path to the uploaded file
+    type: String,
     default: '/images/default-avatar.svg'
   },
   googleId: {
     type: String,
     unique: true,
-    sparse: true // Allows multiple users without a googleId
+    sparse: true
   }
 });
 
